@@ -1,0 +1,16 @@
+{
+    "contents" : "library(nimble)\nsource('importance.R')\n\nbetaBernCode <- nimbleCode({\n    for (i in 1:SAMPS) {\n        x[i] ~ dbern(prob = p)\n    }\n    p ~ dbeta(alpha, beta)\n})\n\nx <- rbinom(n = 100, size = 1, prob = .4)\n\nbetaBernModel <- nimbleModel(betaBernCode,\n                             constants = list(SAMPS = length(x)),\n                             data = list(x = x),\n                             inits = list(alpha = 10, beta = 30))\n\npropCode <- nimbleCode({\n#     for (i in 1:SAMPS) {\n#         x[i] ~ dbern(prob = p)\n#     }\n    p ~ dbeta(alpha, beta)\n})\n\npropModel <- nimbleModel(propCode,\n                         constants = list(SAMPS = length(x)),\n                         inits = list(alpha = 1, beta = 1))\n\n\nsampler <- importance_sampler(betaBernModel, propModel, c(\"p\"))\n\nsampler$run(50)\n\n## as.matrix(sampler$mvSamps)\n\nCbetaBern <- compileNimble(betaBernModel)\nCprop <- compileNimble(propModel)\nCsampler <- compileNimble(sampler, project = betaBernModel)\n\nCsampler$run(10000)\nw <- as.numeric(as.matrix(Csampler$weights[\"w\"]))\ns <- as.numeric(as.matrix(Csampler$mvSamps[\"p\"]))\nhist(s)\nresample <- sample(s, prob = w, replace = TRUE)\nhist(resample, freq = FALSE)\n\nt = sum(x)\nn = length(x)\ncurve(dbeta(x, 10 + t, 30 + n - t), add = TRUE) ## analytic posterior\n\n(10 + t) /  (40 + n) ## posterior mean when solving analytically\nmean(resample) ## posterior mean from sampling\n\n",
+    "created" : 1447831305068.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4170356604",
+    "id" : "31BE07F6",
+    "lastKnownWriteTime" : 1447831049,
+    "path" : "~/school/research/nimble-testing/test-importance.R",
+    "project_path" : "test-importance.R",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}

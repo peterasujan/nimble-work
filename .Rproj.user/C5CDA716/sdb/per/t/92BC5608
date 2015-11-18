@@ -1,0 +1,16 @@
+{
+    "contents" : "#' Creates an importance sampler for the specified model and proposal distribution.\n#' \n#' @param model An uncompiled or compiled NIMBLE model.  This argument is required.\n#' @param propModel An uncompiled or compiled NIMBLE model.  This argument is required.\n#' @param target The nodes to be sampled.\n#'\n#' @author Peter Sujan\n#' \nimportance_sampler <- nimbleFunction(\n    setup = function(model, propModel, target) {\n        ## TODO: how to infer types for desired nodes?\n#         targetLength <- length(model$expandNodeNames(target, returnScalarComponents = TRUE))\n#         mvSpec <- modelValuesSpec(vars = target, sizes = targetLength)\n#         mvSamps <- modelValues(mvSpec)\n#         mvResamps <- modelValues(mvSpec)\n        mvSamps <- modelValues(model)\n        mvResamps <- modelValues(model)\n        weightsSpec <- modelValuesSpec(vars = 'w', types = 'double', sizes = 1)\n        weights <- modelValues(weightsSpec)\n    },\n\n    ## reset is currently unused\n    run = function(niter = integer(), reset = logical(default=TRUE)) {\n        resize(mvSamps, niter)\n        resize(mvResamps, niter)\n        resize(weights, niter)\n        weightSum <- 0\n        for (i in 1:niter) {\n            simulate(propModel)\n            nimCopy(from = propModel, to = mvSamps, nodes = target, row = 1, rowTo = i, logProb = FALSE)\n            nimCopy(from = propModel, to = model, nodes = target, logProb = FALSE)\n            currentWeight <- exp(calculate(model) - calculate(propModel))\n            weights['w', i][1] <<- currentWeight\n            weightSum <- weightSum + currentWeight\n        }\n        ## normalize weights\n        for (i in 1:niter) {\n            weights['w', i][1] <<- weights['w', i][1] / weightSum\n        }\n#         for (i in 1:niter) {\n#             index <- rcat(1, prob = weights)\n#             nimCopy(from = mvSamps, to = mvResamps, nodes = target, row = index, rowTo = i, logProb = FALSE)\n#         }\n    }\n)\n",
+    "created" : 1447831295511.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1073083121",
+    "id" : "92BC5608",
+    "lastKnownWriteTime" : 1447830963,
+    "path" : "~/school/research/nimble-testing/importance.R",
+    "project_path" : "importance.R",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}
