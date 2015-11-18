@@ -38,7 +38,7 @@ Cprop <- compileNimble(propModel)
 Csampler <- compileNimble(sampler, project = betaBernModel)
 
 Csampler$run(10000)
-w <- as.numeric(as.matrix(Csampler$weights["w"]))
+w <- as.numeric(as.matrix(Csampler$weights["weight"]))
 s <- as.numeric(as.matrix(Csampler$mvSamps["p"]))
 hist(s)
 resample <- sample(s, prob = w, replace = TRUE)

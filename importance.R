@@ -15,7 +15,9 @@ importance_sampler <- nimbleFunction(
 #         mvResamps <- modelValues(mvSpec)
         mvSamps <- modelValues(model)
         mvResamps <- modelValues(model)
-        weightsSpec <- modelValuesSpec(vars = 'w', types = 'double', sizes = 1)
+        weightsSpec <- modelValuesSpec(vars = c('weight', 'normWeight'),
+                                       types = c('double', 'double'),
+                                       sizes = list(weight = 1, normWeight = 1))
         weights <- modelValues(weightsSpec)
     },
 
@@ -30,12 +32,12 @@ importance_sampler <- nimbleFunction(
             nimCopy(from = propModel, to = mvSamps, nodes = target, row = 1, rowTo = i, logProb = FALSE)
             nimCopy(from = propModel, to = model, nodes = target, logProb = FALSE)
             currentWeight <- exp(calculate(model) - calculate(propModel))
-            weights['w', i][1] <<- currentWeight
+            weights['weight', i][1] <<- currentWeight
             weightSum <- weightSum + currentWeight
         }
         ## normalize weights
         for (i in 1:niter) {
-            weights['w', i][1] <<- weights['w', i][1] / weightSum
+            weights['normWeight', i][1] <<- weights['weight', i][1] / weightSum
         }
 #         for (i in 1:niter) {
 #             index <- rcat(1, prob = weights)
