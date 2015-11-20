@@ -8,11 +8,6 @@
 #' 
 importance_sampler <- nimbleFunction(
     setup = function(model, propModel, target, silent = FALSE) {
-        ## TODO: how to infer types for desired nodes?
-#         targetLength <- length(model$expandNodeNames(target, returnScalarComponents = TRUE))
-#         mvSpec <- modelValuesSpec(vars = target, sizes = targetLength)
-#         mvSamps <- modelValues(mvSpec)
-#         mvResamps <- modelValues(mvSpec)
         mvSamps <- modelValues(model)
         mvResamps <- modelValues(model)
         weightsSpec <- modelValuesSpec(vars = c('weight', 'normWeight'),

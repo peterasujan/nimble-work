@@ -16,9 +16,6 @@ betaBernModel <- nimbleModel(betaBernCode,
                              inits = list(alpha = 10, beta = 30))
 
 propCode <- nimbleCode({
-#     for (i in 1:SAMPS) {
-#         x[i] ~ dbern(prob = p)
-#     }
     p ~ dbeta(alpha, beta)
 })
 
@@ -28,10 +25,6 @@ propModel <- nimbleModel(propCode,
 
 
 sampler <- importance_sampler(betaBernModel, propModel, c("p"))
-
-sampler$run(50)
-
-## as.matrix(sampler$mvSamps)
 
 CbetaBern <- compileNimble(betaBernModel)
 Cprop <- compileNimble(propModel)
@@ -51,4 +44,3 @@ curve(dbeta(x, 10 + t, 30 + n - t), add = TRUE) ## analytic posterior
 
 (10 + t) /  (40 + n) ## analytic posterior mean
 mean(resample) ## empirical posterior mean
-
