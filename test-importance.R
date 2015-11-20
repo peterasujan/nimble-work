@@ -38,16 +38,17 @@ Cprop <- compileNimble(propModel)
 Csampler <- compileNimble(sampler, project = betaBernModel)
 
 Csampler$run(10000)
-w <- as.numeric(as.matrix(Csampler$weights["weight"]))
-s <- as.numeric(as.matrix(Csampler$mvSamps["p"]))
+w <- as.numeric(Csampler$weights["weight"])
+s <- as.numeric(Csampler$mvSamps["p"])
 hist(s)
-resample <- sample(s, prob = w, replace = TRUE)
+## resample <- sample(s, prob = w, replace = TRUE)
+resample <- as.numeric(Csampler$mvResamps["p"])
 hist(resample, freq = FALSE)
 
 t = sum(x)
 n = length(x)
 curve(dbeta(x, 10 + t, 30 + n - t), add = TRUE) ## analytic posterior
 
-(10 + t) /  (40 + n) ## posterior mean when solving analytically
-mean(resample) ## posterior mean from sampling
+(10 + t) /  (40 + n) ## analytic posterior mean
+mean(resample) ## empirical posterior mean
 

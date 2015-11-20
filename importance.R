@@ -7,7 +7,7 @@
 #' @author Peter Sujan
 #' 
 importance_sampler <- nimbleFunction(
-    setup = function(model, propModel, target) {
+    setup = function(model, propModel, target, silent = FALSE) {
         ## TODO: how to infer types for desired nodes?
 #         targetLength <- length(model$expandNodeNames(target, returnScalarComponents = TRUE))
 #         mvSpec <- modelValuesSpec(vars = target, sizes = targetLength)
@@ -21,11 +21,14 @@ importance_sampler <- nimbleFunction(
         weights <- modelValues(weightsSpec)
     },
 
-    ## reset is currently unused
+    ## reset is currently unused (might want to allow repeated re-samples without
+    ## taking a new proposal sample??)
     run = function(niter = integer(), reset = logical(default=TRUE)) {
         resize(mvSamps, niter)
         resize(mvResamps, niter)
         resize(weights, niter)
+        declare(weightsVector, double(1, niter))
+        declare(ids, integer(1, niter))
         weightSum <- 0
         for (i in 1:niter) {
             simulate(propModel)
@@ -33,15 +36,18 @@ importance_sampler <- nimbleFunction(
             nimCopy(from = propModel, to = model, nodes = target, logProb = FALSE)
             currentWeight <- exp(calculate(model) - calculate(propModel))
             weights['weight', i][1] <<- currentWeight
+            weightsVector[i] <- currentWeight
             weightSum <- weightSum + currentWeight
         }
         ## normalize weights
         for (i in 1:niter) {
             weights['normWeight', i][1] <<- weights['weight', i][1] / weightSum
         }
-#         for (i in 1:niter) {
-#             index <- rcat(1, prob = weights)
-#             nimCopy(from = mvSamps, to = mvResamps, nodes = target, row = index, rowTo = i, logProb = FALSE)
-#         }
+        
+        ## resample
+        rankSample(weightsVector, niter, ids, silent)
+        for (i in 1:niter) {
+            nimCopy(from = mvSamps, to = mvResamps, nodes = target, row = ids[i], rowTo = i, logProb = FALSE)
+        }
     }
 )
