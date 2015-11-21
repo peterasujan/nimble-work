@@ -1,5 +1,8 @@
 library(nimble)
+library(testthat)
 source('importance.R')
+
+context("importance sampling")
 
 betaBernCode <- nimbleCode({
     for (i in 1:SAMPS) {
@@ -38,9 +41,21 @@ hist(s)
 resample <- as.numeric(Csampler$mvResamps["p"])
 hist(resample, freq = FALSE)
 
-t = sum(x)
-n = length(x)
-curve(dbeta(x, 10 + t, 30 + n - t), add = TRUE) ## analytic posterior
+t <- sum(x)
+n <- length(x)
+postAlpha <- 10 + t
+postBeta <- 30 + n - t
+postSample <- rbeta(10000, shape1 = postAlpha, shape2 = postBeta)
+curve(dbeta(x, postAlpha, postBeta), add = TRUE) ## analytic posterior
 
-(10 + t) /  (40 + n) ## analytic posterior mean
+
+postAlpha / (postAlpha + postBeta) ## analytic posterior mean
 mean(resample) ## empirical posterior mean
+
+resampQuantiles <- as.numeric(quantile(resample, probs = 1:99 / 100))
+## quantilesCompare <- quantile(postSample, probs = 1:99 / 100)
+quantilesCompare <- qbeta(p = 1:99 / 100, shape1 = postAlpha, shape2 = postBeta)
+
+test_that("quantiles of sample match those of analytic posterior", {
+    expect_equal(resampQuantiles, quantilesCompare, tolerance = 0.01)
+})
