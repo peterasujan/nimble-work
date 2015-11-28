@@ -52,6 +52,17 @@ curve(dbeta(x, postAlpha, postBeta), add = TRUE) ## analytic posterior
 postAlpha / (postAlpha + postBeta) ## analytic posterior mean
 mean(resample) ## empirical posterior mean
 
+test_that("means are equal",
+          expect_equal(mean(resample), postAlpha / (postAlpha + postBeta),
+                       tolerance = 0.01))
+
+test_that("variances are equal",
+          expect_equal(var(resample),
+                       postAlpha * postBeta /
+                           ((postAlpha + postBeta)^2 * (postAlpha + postBeta + 1)),
+                       tolerance = 0.01))
+
+## is testing quantiles overkill??
 resampQuantiles <- as.numeric(quantile(resample, probs = 1:99 / 100))
 ## quantilesCompare <- quantile(postSample, probs = 1:99 / 100)
 quantilesCompare <- qbeta(p = 1:99 / 100, shape1 = postAlpha, shape2 = postBeta)
