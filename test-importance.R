@@ -23,7 +23,6 @@ propCode <- nimbleCode({
 })
 
 propModel <- nimbleModel(propCode,
-                         constants = list(SAMPS = length(x)),
                          inits = list(alpha = 1, beta = 1))
 
 

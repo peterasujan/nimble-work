@@ -8,8 +8,11 @@
 #' 
 importance_sampler <- nimbleFunction(
     setup = function(model, propModel, target, silent = FALSE) {
-        mvSamps <- modelValues(model)
-        mvResamps <- modelValues(model)
+        targetVars <- unique(removeIndexing(target))
+        modelSymbolObjects <- model$getSymbolTable()$getSymbolObjects()
+        sampsSpec <- modelValuesSpec(symbolTable(symbols = modelSymbolObjects[targetVars]))
+        mvSamps   <- modelValues(sampsSpec)
+        mvResamps <- modelValues(sampsSpec)
         weightsSpec <- modelValuesSpec(vars = c('weight', 'normWeight'),
                                        types = c('double', 'double'),
                                        sizes = list(weight = 1, normWeight = 1))
@@ -24,25 +27,21 @@ importance_sampler <- nimbleFunction(
         resize(weights, niter)
         declare(weightsVector, double(1, niter))
         declare(ids, integer(1, niter))
-        weightSum <- 0
         for (i in 1:niter) {
             simulate(propModel)
-            nimCopy(from = propModel, to = mvSamps, nodes = target, row = 1, rowTo = i, logProb = FALSE)
+            nimCopy(from = propModel, to = mvSamps, nodes = target, row = i, logProb = FALSE)
             nimCopy(from = propModel, to = model, nodes = target, logProb = FALSE)
             currentWeight <- exp(calculate(model) - calculate(propModel))
             weights['weight', i][1] <<- currentWeight
             weightsVector[i] <- currentWeight
-            weightSum <- weightSum + currentWeight
         }
         ## normalize weights
-        for (i in 1:niter) {
+        weightSum <- sum(weightsVector)
+        for (i in 1:niter)
             weights['normWeight', i][1] <<- weights['weight', i][1] / weightSum
-        }
-        
         ## resample
         rankSample(weightsVector, niter, ids, silent)
-        for (i in 1:niter) {
+        for (i in 1:niter)
             nimCopy(from = mvSamps, to = mvResamps, nodes = target, row = ids[i], rowTo = i, logProb = FALSE)
-        }
     }
 )
